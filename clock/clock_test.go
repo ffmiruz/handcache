@@ -30,3 +30,14 @@ func TestBasic(t *testing.T) {
 		t.Fatal("fail evict-insert")
 	}
 }
+
+func TestTriggerParallelHits(t *testing.T) {
+	sv := New[int, int](2)
+ 	iters := 100
+	for i := 0; i < iters; i++ {
+		go sv.Set(i, i)
+		go sv.Get(i)
+		go sv.Set(i, i+1)
+		go sv.Get(i)
+	}
+}

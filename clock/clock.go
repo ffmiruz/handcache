@@ -5,7 +5,7 @@ import (
 )
 
 type Cache[K comparable, V any] struct {
-	mu    sync.Mutex
+	mu    sync.RWMutex
 	list  []object[K, V]
 	index map[K]int
 	size  int
@@ -59,13 +59,18 @@ func (c *Cache[K, V]) Set(key K, value V) {
 }
 
 func (c *Cache[K, V]) Get(key K) (V, bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	pos, ok := c.index[key]
 	if ok {
+		if c.list[pos].usage == true {
+			return c.list[pos].value, true
+		}
+		c.mu.Lock()
 		c.list[pos].usage = true
+		c.mu.Unlock()
 		return c.list[pos].value, true
 	}
 	var v V
-	return v, false
+	return v, ok
 }
